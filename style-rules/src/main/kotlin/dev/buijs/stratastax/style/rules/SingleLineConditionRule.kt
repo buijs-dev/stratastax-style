@@ -24,7 +24,6 @@ import com.pinterest.ktlint.rule.engine.core.api.RuleId
 import com.pinterest.ktlint.rule.engine.core.api.editorconfig.EditorConfig
 import com.pinterest.ktlint.rule.engine.core.api.editorconfig.MAX_LINE_LENGTH_PROPERTY
 import com.pinterest.ktlint.rule.engine.core.api.ifAutocorrectAllowed
-import com.pinterest.ktlint.rule.engine.core.api.isWhiteSpace
 import com.pinterest.ktlint.rule.engine.core.api.isWhiteSpace20
 import org.jetbrains.kotlin.com.intellij.lang.ASTNode
 
@@ -82,7 +81,7 @@ class SingleLineConditionRule :
         val joined =
             leaves.joinToString("") { leaf ->
                 when {
-                    !leaf.isWhiteSpace() || !leaf.text.contains('\n') -> leaf.text
+                    !leaf.isWhiteSpace20 || !leaf.text.contains('\n') -> leaf.text
                     leaf.treePrev == lpar || leaf.treeNext == rpar -> ""
                     else -> " "
                 }
