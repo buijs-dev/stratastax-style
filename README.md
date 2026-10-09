@@ -51,7 +51,7 @@ fun top(x: List<Int>) =
 
 ## Modules
 - `style-rules` - the rules and `StratastaxStyle`, the one entry point the CLI, the Gradle plugin and
-  the stratastax code generator share. Also a ktlint rule set (`META-INF/services`) for the ktlint
+  the stratastax code generator share. Also, a ktlint rule set (`META-INF/services`) for the ktlint
   CLI and IDE plugins.
 - `style-gradle-plugin` - `dev.buijs.stratastax.style`.
 - `style-cli` - `stratafmt`.
@@ -72,7 +72,7 @@ stratastaxStyle {
 ```
 
 - `./gradlew stratastaxStyleApply` formats every Kotlin source set and the `*.gradle.kts` scripts,
-  then fails on what is left - what only a hand can fix (a condition too long for one line, a
+  then fails on what is left; what only a hand can fix (a condition too long for one line, a
   wildcard import, a file not named after its class). `build` runs it before compiling.
 - `./gradlew stratastaxStyleCheck` changes nothing and fails on anything not in style, for CI.
 
@@ -104,13 +104,6 @@ With the ktlint IntelliJ plugin, add the `style-rules` jar as an external rule s
 The stratastax code generator ([stratastax-codegen](https://github.com/buijs-dev/stratastax-codegen),
 plugin `dev.buijs.stratastax.codegen`) formats its own output with this style;
 `stratastaxCodegen { formatGeneratedSources.set(false) }` turns that off.
-
-## Migrating from ktfmt/spotless
-Replace spotless with the `dev.buijs.stratastax.style` plugin (its `licenseHeader` takes over
-spotless' `licenseHeader`) and run
-`stratastaxStyleApply` (or `build`) once: the empty `//` comments go, annotations stack, chains wrap one call per line.
-What it still reports afterwards needs a hand: wildcard imports, lines too long to wrap
-automatically (long string literals), a file not named after its single class.
 
 ## Related Stratastax projects
 - [stratastax-codegen](https://github.com/buijs-dev/stratastax-codegen) - formats its generated sources with `style-rules`
