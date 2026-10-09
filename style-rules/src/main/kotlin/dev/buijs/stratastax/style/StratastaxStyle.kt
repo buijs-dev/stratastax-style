@@ -51,11 +51,19 @@ import java.nio.file.Paths
  * With a [licenseHeader], a `.kt` file that does not open with it gets it added on top; build
  * scripts (`.kts`) are left without.
  */
-class StratastaxStyle(
-    maxLineLength: Int = DEFAULT_MAX_LINE_LENGTH,
-    private val preserveLineBreaks: Boolean = true,
-    licenseHeader: String? = null,
+class StratastaxStyle internal constructor(
+    maxLineLength: Int,
+    private val preserveLineBreaks: Boolean,
+    licenseHeader: String?,
+    /** The ktlint package [formatWithMoreRuns] reaches into; tests point it elsewhere. */
+    ktlintInternals: String,
 ) {
+
+    constructor(
+        maxLineLength: Int = DEFAULT_MAX_LINE_LENGTH,
+        preserveLineBreaks: Boolean = true,
+        licenseHeader: String? = null,
+    ) : this(maxLineLength, preserveLineBreaks, licenseHeader, KTLINT_INTERNALS)
 
     private val licenseHeader: String? = licenseHeader?.trim()?.takeIf { it.isNotEmpty() }
 
@@ -103,12 +111,11 @@ class StratastaxStyle(
                     .getDeclaredField("codeFormatter")
                     .apply { isAccessible = true }
                     .get(engine)
-            val internal = "com.pinterest.ktlint.rule.engine.internal"
-            val handlerType = Class.forName("$internal.AutocorrectHandler")
+            val handlerType = Class.forName("$ktlintInternals.AutocorrectHandler")
             val formatAll =
                 Class
                     .forName(
-                        "$internal.AllAutocorrectHandler",
+                        "$ktlintInternals.AllAutocorrectHandler",
                     ).getField("INSTANCE")
                     .get(null)
             val format =
@@ -250,6 +257,8 @@ class StratastaxStyle(
                 "standard:no-blank-lines-in-chained-method-calls",
                 "standard:blank-line-between-when-conditions",
             )
+
+        private const val KTLINT_INTERNALS = "com.pinterest.ktlint.rule.engine.internal"
 
         /** Enough for generated code nested several levels deep; more means rules oscillate. */
         const val MAX_FORMAT_RUNS = 10

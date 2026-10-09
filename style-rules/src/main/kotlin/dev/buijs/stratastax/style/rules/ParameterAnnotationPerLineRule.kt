@@ -50,7 +50,7 @@ class ParameterAnnotationPerLineRule :
         ) -> AutocorrectDecision,
     ) {
         if (node.elementType != ElementType.VALUE_PARAMETER) return
-        if (node.treeParent?.isMultilineParameterList != true) return
+        if (!node.treeParent.isMultilineParameterList) return
         val annotations = node.annotationEntries().ifEmpty { return }
 
         // Another modifier, `val`/`var` or the name: whatever follows the last annotation.
@@ -58,9 +58,10 @@ class ParameterAnnotationPerLineRule :
             annotations.last().nextCodeSibling() ?: annotations.last().treeParent.nextCodeSibling()
         val indent = node.indent20
         (annotations.drop(1) + listOfNotNull(afterAnnotations)).forEach { element ->
+            // Never the first child: an annotation follows another, the rest the annotations.
             val before = element.treePrev
-            if (before?.isComment == true) return@forEach
-            if (before == null || !before.isWhiteSpace20 || !before.text.contains('\n')) {
+            if (before.isComment) return@forEach
+            if (!before.isWhiteSpace20 || !before.text.contains('\n')) {
                 emit(element.startOffset, "Annotation or parameter not on its own line", true)
                     .ifAutocorrectAllowed { element.upsertWhitespaceBeforeMe(indent) }
             }

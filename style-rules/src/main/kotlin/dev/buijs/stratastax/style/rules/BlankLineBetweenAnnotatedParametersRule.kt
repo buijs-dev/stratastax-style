@@ -25,6 +25,7 @@ import com.pinterest.ktlint.rule.engine.core.api.children20
 import com.pinterest.ktlint.rule.engine.core.api.ifAutocorrectAllowed
 import com.pinterest.ktlint.rule.engine.core.api.indent20
 import com.pinterest.ktlint.rule.engine.core.api.isWhiteSpace20
+import com.pinterest.ktlint.rule.engine.core.api.prevCodeSibling20
 import org.jetbrains.kotlin.com.intellij.lang.ASTNode
 
 /**
@@ -46,7 +47,7 @@ class BlankLineBetweenAnnotatedParametersRule :
     ) {
         if (!node.isMultilineParameterList) return
         // Class constructors only: a function's parameters stay compact.
-        if (node.treeParent?.elementType != ElementType.PRIMARY_CONSTRUCTOR) return
+        if (node.treeParent.elementType != ElementType.PRIMARY_CONSTRUCTOR) return
         val parameters =
             node.children20.filter { it.elementType == ElementType.VALUE_PARAMETER }.toList()
         parameters.zipWithNext().forEach { (previous, next) ->
@@ -54,13 +55,11 @@ class BlankLineBetweenAnnotatedParametersRule :
                 return@forEach
             }
 
-            val comma =
-                generateSequence(previous.treeNext) { it.treeNext }
-                    .takeWhile { it != next }
-                    .firstOrNull { it.elementType == ElementType.COMMA } ?: return@forEach
-            val after = comma.treeNext?.takeIf { it.isWhiteSpace20 } ?: return@forEach
+            // Comments may sit before the comma, but code never: the comma is next's code sibling.
+            val comma = next.prevCodeSibling20!!
+            val after = comma.treeNext.takeIf { it.isWhiteSpace20 } ?: return@forEach
             // A comment trailing the comma on the same line keeps its place.
-            if (after.treeNext?.isComment == true && !after.text.contains('\n')) return@forEach
+            if (after.treeNext.isComment && !after.text.contains('\n')) return@forEach
             if (after.text.count { it == '\n' } != 2) {
                 emit(
                     after.startOffset,

@@ -58,8 +58,9 @@ class SingleLineConditionRule :
             return
         }
 
-        val lpar = node.findChildByType(ElementType.LPAR) ?: return
-        val rpar = node.findChildByType(ElementType.RPAR) ?: return
+        // ktlint only formats code that parses, so a condition has its parentheses.
+        val lpar = node.findChildByType(ElementType.LPAR)!!
+        val rpar = node.findChildByType(ElementType.RPAR)!!
         val parts =
             generateSequence(
                 lpar.treeNext,
@@ -122,9 +123,8 @@ class SingleLineConditionRule :
             firstChildNode,
         ) { it.treeNext }.flatMap { sequenceOf(it) + it.descendants() }
 
+    /** Only asked of a condition without comments, see `unjoinable`. */
     private fun ASTNode.statementCount(): Int =
         generateSequence(firstChildNode) { it.treeNext }
-            .count {
-                !it.isWhiteSpace20 && !it.isComment && it.elementType != ElementType.SEMICOLON
-            }
+            .count { !it.isWhiteSpace20 && it.elementType != ElementType.SEMICOLON }
 }

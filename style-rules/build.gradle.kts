@@ -1,3 +1,5 @@
+import kotlinx.kover.gradle.plugin.dsl.CoverageUnit
+
 plugins {
     id("stratastax.library")
 }
@@ -29,5 +31,17 @@ publishing {
                     "style-gradle-plugin/build/test-repository",
                 ),
             )
+    }
+}
+
+// style-rules is the style itself: every line and branch of it is tested.
+kover {
+    reports {
+        verify {
+            rule {
+                minBound(90, CoverageUnit.LINE)
+                minBound(90, CoverageUnit.BRANCH)
+            }
+        }
     }
 }

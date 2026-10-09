@@ -46,7 +46,8 @@ class NoEmptyLineCommentRule :
         emit(node.startOffset, "Empty line comment", true).ifAutocorrectAllowed {
             val before = node.treePrev?.takeIf { it.isWhiteSpace20 }
 
-            val after = node.treeNext?.takeIf { it.isWhiteSpace20 }
+            // A line break, or nothing at the end of the file.
+            val after = node.treeNext
 
             val parent = node.treeParent
             when {

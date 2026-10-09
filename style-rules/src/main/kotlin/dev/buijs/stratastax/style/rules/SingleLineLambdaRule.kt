@@ -59,9 +59,10 @@ class SingleLineLambdaRule(
     ) {
         if (node.elementType != ElementType.FUNCTION_LITERAL || !node.text.contains('\n')) return
         if (key(node) in keepMultiLine()) return
-        val lbrace = node.findChildByType(ElementType.LBRACE) ?: return
-        val rbrace = node.findChildByType(ElementType.RBRACE) ?: return
-        val block = node.findChildByType(ElementType.BLOCK) ?: return
+        // ktlint only formats code that parses, so a lambda has its braces and a block.
+        val lbrace = node.findChildByType(ElementType.LBRACE)!!
+        val rbrace = node.findChildByType(ElementType.RBRACE)!!
+        val block = node.findChildByType(ElementType.BLOCK)!!
         val statement =
             block.children20
                 .filterNot { it.isWhiteSpace20 }
@@ -69,9 +70,9 @@ class SingleLineLambdaRule(
                 .singleOrNull() ?: return
         if (statement.isComment || statement.text.contains('\n')) return
         val parameters = node.findChildByType(ElementType.VALUE_PARAMETER_LIST)
-        if (parameters?.text?.contains('\n') == true) return
+        if (parameters != null && parameters.text.contains('\n')) return
         val (before, after) = lbrace.lineAround(rbrace)
-        val arrow = parameters?.let { " ${it.text} ->" }.orEmpty()
+        val arrow = if (parameters == null) "" else " ${parameters.text} ->"
         if ("$before{$arrow ${statement.text} }$after".length > maxLineLength) return
         emit(lbrace.startOffset, "A single-expression lambda that fits stays on one line", true)
             .ifAutocorrectAllowed {

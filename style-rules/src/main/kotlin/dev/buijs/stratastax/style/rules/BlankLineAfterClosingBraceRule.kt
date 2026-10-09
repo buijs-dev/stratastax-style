@@ -23,7 +23,10 @@ import com.pinterest.ktlint.rule.engine.core.api.RuleAutocorrectApproveHandler
 import com.pinterest.ktlint.rule.engine.core.api.RuleId
 import com.pinterest.ktlint.rule.engine.core.api.children20
 import com.pinterest.ktlint.rule.engine.core.api.ifAutocorrectAllowed
+import com.pinterest.ktlint.rule.engine.core.api.isPartOfComment20
 import com.pinterest.ktlint.rule.engine.core.api.isWhiteSpace20
+import com.pinterest.ktlint.rule.engine.core.api.lastChildLeafOrSelf20
+import com.pinterest.ktlint.rule.engine.core.api.prevCodeLeaf
 import org.jetbrains.kotlin.com.intellij.lang.ASTNode
 
 /**
@@ -55,7 +58,7 @@ class BlankLineAfterClosingBraceRule :
                         setOf(ElementType.LBRACE, ElementType.RBRACE, ElementType.SEMICOLON)
                 }.toList()
         statements.zipWithNext().forEach { (previous, next) ->
-            if (previous.lastCodeLeaf()?.elementType != ElementType.RBRACE) return@forEach
+            if (previous.lastCodeLeaf().elementType != ElementType.RBRACE) return@forEach
             // The line break right after `previous`, past a comment trailing it on the same line.
             val lineBreak =
                 generateSequence(previous.treeNext) { it.treeNext }
@@ -67,16 +70,12 @@ class BlankLineAfterClosingBraceRule :
         }
     }
 
-    private fun ASTNode.lastCodeLeaf(): ASTNode? {
-        var leaf = lastChildNode ?: return this
-        while (true) {
-            while (leaf.isWhiteSpace20 || leaf.isComment) leaf = leaf.treePrev ?: return null
-            leaf = leaf.lastChildNode ?: return leaf
-        }
+    private fun ASTNode.lastCodeLeaf(): ASTNode {
+        val leaf = lastChildLeafOrSelf20
+        // Whitespace never ends a statement, a comment may; a statement holds code before it.
+        return if (leaf.isPartOfComment20) leaf.prevCodeLeaf!! else leaf
     }
 
-    private companion object {
-
-        val CONTAINERS = setOf(ElementType.BLOCK, ElementType.CLASS_BODY, ElementType.FILE)
-    }
 }
+
+private val CONTAINERS = setOf(ElementType.BLOCK, ElementType.CLASS_BODY, ElementType.FILE)

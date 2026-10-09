@@ -8,9 +8,8 @@ val stratafmt = configurations.create("stratafmt") { isCanBeConsumed = false }
 dependencies {
     stratafmt(project(":style-cli"))
 
+    // Coverage covers the style itself; the CLI and Gradle plugin are thin wrappers around it.
     kover(project(":style-rules"))
-    kover(project(":style-cli"))
-    kover(project(":style-gradle-plugin"))
 
     dokka(project(":style-rules"))
     dokka(project(":style-gradle-plugin"))

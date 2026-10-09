@@ -16,8 +16,11 @@
  */
 package dev.buijs.stratastax.style
 
+import com.pinterest.ktlint.ruleset.standard.StandardRuleSetProvider
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.io.TempDir
+import java.io.File
 
 class StratastaxStyleTest {
 
@@ -529,6 +532,60 @@ class StratastaxStyleTest {
 
         assertThat(style.check(source, "ATest.kt").map { it.ruleId })
             .doesNotContain("standard:max-line-length")
+    }
+
+    @Test
+    fun `a blank license header counts as none`() {
+        val blank = StratastaxStyle(licenseHeader = "  \n ")
+
+        assertThat(blank.format("package a\n\nclass A\n")).isEqualTo("package a\n\nclass A\n")
+        assertThat(blank.check("package a\n\nclass A\n", "A.kt")).isEmpty()
+    }
+
+    @Test
+    fun `a violation tells where it is and what is wrong`() {
+        val violation =
+            style
+                .check("class A(\n    @A @B val a: Int,\n)\n", "A.kt")
+                .first { it.ruleId == "stratastax:parameter-annotation-per-line" }
+
+        assertThat(violation.line).isEqualTo(2)
+        assertThat(violation.column).isEqualTo(8)
+        assertThat(violation.message).isEqualTo("Annotation or parameter not on its own line")
+    }
+
+    @Test
+    fun `a file is formatted in place, and only written when it changed`(
+        @TempDir
+        dir: File,
+    ) {
+        val file = dir.resolve("A.kt").apply { writeText("class A(\n    @A @B val a: Int,\n)\n") }
+
+        assertThat(style.format(file)).isTrue()
+        assertThat(file.readText()).isEqualTo("class A(\n    @A\n    @B\n    val a: Int,\n)\n")
+        assertThat(style.format(file)).isFalse()
+    }
+
+    @Test
+    fun `without access to ktlint's internals formatting falls back to its public API`() {
+        val fallback =
+            StratastaxStyle(
+                StratastaxStyle.DEFAULT_MAX_LINE_LENGTH,
+                preserveLineBreaks = true,
+                licenseHeader = null,
+                ktlintInternals = "dev.buijs.missing",
+            )
+
+        assertThat(fallback.formatsWithMoreRuns).isFalse()
+        assertThat(fallback.format("class A(\n    @A @B val a: Int,\n)\n"))
+            .isEqualTo("class A(\n    @A\n    @B\n    val a: Int,\n)\n")
+    }
+
+    @Test
+    fun `the rules turned off to preserve line breaks are standard rules`() {
+        val standard = StandardRuleSetProvider().getRuleProviders().map { it.ruleId.value }
+
+        assertThat(standard).containsAll(StratastaxStyle.PRESERVE_DISABLED_RULES)
     }
 
     private companion object {
